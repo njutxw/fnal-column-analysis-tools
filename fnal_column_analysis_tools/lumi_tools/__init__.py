@@ -63,7 +63,7 @@ class LumiList(object):
         The member array can be passed to LumiData.get_lumi()
     """
     def __init__(self, runs=None, lumis=None):
-        self.array = np.zeros(shape=(0,2))
+        self.array = np.zeros(shape=(0,2), dtype='i8')
         if runs is not None:
             self.array = np.unique(np.c_[runs, lumis], axis=0)
     

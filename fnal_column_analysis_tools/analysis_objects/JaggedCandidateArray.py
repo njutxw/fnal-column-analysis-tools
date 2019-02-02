@@ -66,7 +66,7 @@ class JaggedCandidateMethods(awkward.Methods):
                                                               mass=column4,
                                                               ...)
         """
-        offsets = awkward.array.jagged.counts2offsets(counts)
+        offsets = awkward.JaggedArray.counts2offsets(counts)
         return cls.candidatesfromoffsets(offsets,**kwargs)
     
     @classmethod

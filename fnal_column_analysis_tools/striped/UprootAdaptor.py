@@ -99,7 +99,7 @@ class UprootJob(object):
         self._treename = treename
         self._worker = worker_class()
         self._user_callback = user_callback
-        self._user_params = user_params
+        self._user_params = copy.deepcopy(user_params)
 
         self._eventsdef = UprootEvents(self._worker.Columns)
         self.EventsProcessed = 0
