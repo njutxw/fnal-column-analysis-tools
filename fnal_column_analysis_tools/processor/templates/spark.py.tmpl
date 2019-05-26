@@ -1,14 +1,30 @@
-global coffea_udf
+# 定义一个全局变量coffea_udf,其中coffea是基于大数据技术的高效分析列对象的框架.
+global coffea_udf 
 
+# 输入和输出都是 binary 类型的 pandas.Series.在Python中Pandas是数据分析的常用工具,Series是Pandas中的一维数据结构,
+# 能存储不同类型的数据，有一组索引与元素对应.
 @fn.pandas_udf(BinaryType(), fn.PandasUDFType.SCALAR)
+
+# django模板{% for %}允许我们在一个序列上迭代.每一次循环中,模板系统会渲染在{% for %}和{% endfor %}之间的所有的内容.
+'''
+{% for col in cols %}
+    {{col}}{{ "," if not loop.last }}  //forloop.last判断,不是最后一项就加逗号",",是最后一项就不加.
+{% endfor %}
+'''
 def coffea_udf(dataset, {% for col in cols %}{{col}}{{ "," if not loop.last }}{% endfor %}):
+   
     global processor_instance, lz4_clevel
     
+    # 创建列表columns和names.()表示元组,[]表示列表,{}表示字典.
     columns = [{% for col in cols %}{{col}}{{ "," if not loop.last }}{% endfor %}]
     names = [{% for col in cols %}{{"'"|safe+col+"'"|safe}}{{ "," if not loop.last }}{% endfor %}]
 
     size = dataset.size
+    # 创建字典items.字典是另一种可变容器模型，且可存储任意类型对象。
+    # 字典的每个键值 key=>value 对用冒号 : 分割，每个键值对之间用逗号 , 分割，整个字典包括在花括号 {} 中.类似hashmap.
     items = {}
+    
+    # for循环使用enumerate()函数,用于将列表columns组合为一个索引序列，同时列出数据下标和数据.
     for i, col in enumerate(columns):
         #numpy array
         if columns[i].array[0].base is None:
@@ -16,14 +32,19 @@ def coffea_udf(dataset, {% for col in cols %}{{col}}{{ "," if not loop.last }}{%
         else:
             items[names[i]] = columns[i].array[0].base
 
+    # 调用PreloadedDataFrame中的init方法进行初始化,生成df.df是Python中Pandas库中的一种数据结构，它类似excel，是一种二维表。
     df = processor.PreloadedDataFrame(size=size, items=items)
     df['dataset'] = dataset[0]
     
+    # 调用processor_instance的process方法进行什么操作???
     vals = processor_instance.process(df)
     
+    # 对数据进行压缩
     valsblob = lz4f.compress(cpkl.dumps(vals), compression_level=lz4_clevel)
     
+    # 创建指定数值的数组.Numpy.full(参数 1：shape，数组的形状； 参数 2：constant value，数组填充的常数值；参数 3：dtype， 数值类型)
     outs = np.full(shape=(size, ), fill_value=b'', dtype='O')
     outs[0] = valsblob
     
+    # 返回series是pandas的一种数据类型,类似于一维数组.
     return pd.Series(outs)
